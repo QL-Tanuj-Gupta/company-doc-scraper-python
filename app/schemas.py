@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
-class Project(BaseModel):
+class ProjectCreate(BaseModel):
   name:str
-  description:str
-  technologies: list[str]
+  overview:str
+  technologies: str
+  team:str
+  features:str
