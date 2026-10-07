@@ -34,5 +34,7 @@ def create_project(
   return new_project
   
 @app.get("/projects")
-def get_projects():
+def get_projects(db:Session = Depends(get_db)):
+  projects = db.query(Project).all()
+  
   return projects
