@@ -6,7 +6,7 @@ def to_markdown_list(items:list[str]|None):
     return "\n".join(f"- {item}" for item in items)
 
 def create_project_markdown(project: ProjectCreate):
-    markdown = f"""# {project.name}
+    markdown = f"""# {project.projectName}
 
 ## Overview
 
