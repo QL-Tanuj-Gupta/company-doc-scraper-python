@@ -1,24 +1,30 @@
-import re
-
 def parse_project_markdown(markdown:str):
-  sections = {}
+  lines= markdown.splitlines()
 
-  pattern = r"## (.+?)\n\n(.*?)(?=\n## |\Z)"
-
-  matches = re.findall(pattern,markdown,re.DOTALL)
-
-  for title,content in matches:
-    sections[title.strip().lower()] = content.strip()
-
-  name_match = re.search(r"^# (.+)$",markdown,re.MULTILINE)
-
-  name = name_match.group(1).strip() if name_match else""
-
-  return{
-    "name":name,
-    "overview": sections.get("overview",""),
-    "technologies": sections.get("technologies",""),
-    "team": sections.get("team",""),
-    "features": sections.get("features",""),
+  project = {
+    "name":"",
+    "overview":"",
+    "technologies":"",
+    "team":"",
+    "features":""
   }
+
+  current_section = None
+
+  for line in lines:
+    if line.startswith("# "):
+      project["name"] = line[2:].strip()
+    
+    elif line.startswith("## "):
+      current_section = line[3:].strip().lower()
+
+    elif current_section:
+      project[current_section] += line + "\n"
+    
+  
+  for key in project:
+    project[key] = project[key].strip()
+  
+  return project
+
 
