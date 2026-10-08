@@ -1,4 +1,6 @@
-from fastapi import Depends,FastAPI,HTTPException
+from fastapi import Depends,FastAPI
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -8,6 +10,13 @@ from app.schemas import ProjectCreate
 from app.services.markdown import to_markdown_list, create_project_markdown
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():
@@ -23,26 +32,35 @@ def create_project(
 
   project_name = project.projectName.strip()
   if not project_name:
-    raise HTTPException(
+    return JSONResponse(
       status_code=400,
-      detail="Project name is required"
+      content={
+          "success": False,
+          "message": "Project name is required"
+      }
     )
 
   if not project.overview.strip():
-    raise HTTPException(
-      status_code=400,
-      detail="Project overview is required"
+    return JSONResponse(
+        status_code=400,
+        content={
+          "success": False,
+          "message": "Project overview is required"
+        }
     )
 
   existing_project = db.query(Project).filter(
     func.lower(Project.name) == project_name.lower()
   ).first()
 
-  if (existing_project):
-    raise HTTPException(
-      status_code=409,
-      detail="Project already exists"
-    )
+  if existing_project:
+    return JSONResponse(
+        status_code=409,
+        content={
+          "success": False,
+          "message": "Project already exists"
+        }
+      )
 
   markdown = create_project_markdown(project)
 
