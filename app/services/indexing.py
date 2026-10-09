@@ -50,7 +50,3 @@ def get_vector_store():
   )
 
   return vector_store
-
-if __name__ == "__main__":
-    vector_store = get_vector_store()
-    print("Vector store initialized successfully.")
