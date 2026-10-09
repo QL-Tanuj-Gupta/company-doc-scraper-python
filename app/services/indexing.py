@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy.engine import make_url
 from llama_index.vector_stores.postgres import PGVectorStore
-from llama_index.core import Document
+from llama_index.core import Document, StorageContext, VectorStoreIndex
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
 
 load_dotenv()
@@ -50,3 +50,20 @@ def get_vector_store():
   )
 
   return vector_store
+
+def index_project_markdown(markdown:str, project_name:str):
+  document = create_document(markdown,project_name)
+
+  vector_store = get_vector_store()
+
+  storage_context = StorageContext.from_defaults(
+    vector_store=vector_store
+  )
+
+  index = VectorStoreIndex.from_documents(
+    [document],
+    storage_context=storage_context,
+    embed_model=embed_model
+  )
+
+  return index
