@@ -89,7 +89,7 @@ def create_project(
     }
   }
 
-@app.post("/chat")
+@app.post("/api/chat")
 def chat(request:ChatRequest):
   if not request.question.strip():
     return JSONResponse(
@@ -102,7 +102,7 @@ def chat(request:ChatRequest):
   
   result = generate_answer(
     question=request.question,
-    history=request.history
+    session_id=request.sessionId
   )
 
   return{

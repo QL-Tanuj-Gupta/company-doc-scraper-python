@@ -13,4 +13,4 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
   question:str
-  history:list[ChatMessage] = []
+  sessionId:str | None = None
