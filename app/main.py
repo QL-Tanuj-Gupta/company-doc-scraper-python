@@ -8,6 +8,7 @@ from app.database.models import Project
 from app.database.dependencies import get_db
 from app.schemas import ProjectCreate
 from app.services.markdown import to_markdown_list, create_project_markdown
+from app.services.indexing import index_project_markdown
 
 app = FastAPI()
 
@@ -63,6 +64,8 @@ def create_project(
       )
 
   markdown = create_project_markdown(project)
+
+  index_project_markdown(markdown, project_name)
 
   new_project = Project(
     name=project_name,
