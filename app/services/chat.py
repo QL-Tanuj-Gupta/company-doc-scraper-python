@@ -50,40 +50,86 @@ def generate_answer(question: str, session_id: str | None = None):
 
     chunks = retrieve_relevant_chunks(
       standalone_question,
-      top_k=3
+      top_k=15
     )
 
     if not chunks:
-        answer = "I couldn't find relevant information in the project documents."
+        context = "No relevant project documents found."
     else:
         context = "\n\n".join(
             f"Project: {chunk['project_name']}\n{chunk['text']}"
             for chunk in chunks
         )
 
-    prompt = f"""You are a friendly assistant for the company's internal project knowledge base.
+    history_text = "\n".join(
+        f"{message.role}: {message.content}"
+        for message in history
+    ) if history else "No previous conversation."
 
-    Follow these rules:
 
-    1. Be natural, polite, and concise.
-    2. For greetings like "Hi", "Hello", or "Hey", respond with a short, friendly greeting. Do not mention a specific project unless the user mentioned it.
-    3. For thanks or other simple pleasantries, respond naturally without retrieving or summarizing project information.
-    4. For project-related questions, answer using only relevant information from the provided context.
-    5. The retrieved context may contain unrelated information. Ignore anything that does not help answer the question.
-    6. If the answer is not supported by the relevant context, say that you could not find the information in the available project documents.
-    7. Never invent project details or make unsupported assumptions.
-    8. For follow-up questions, use the standalone question and relevant context to understand what the user means.
-    9. Use clear language and include only the details needed to answer the question.
+    SYSTEM_PROMPT = f"""
+You are a company project knowledge assistant.
 
-    Relevant project context:
-    {context}
+Your task is to answer user questions using only the provided Project Context and Conversation History.
 
-    User question:
-    {standalone_question}
+Core rules:
+1. Ground every answer in the provided context.
+   - Use only information explicitly present in Project Context and Conversation History.
+   - Do not use outside knowledge, assumptions, or general knowledge.
+   - Do not invent missing facts, technologies, features, team members, project details, or dates.
 
-    Answer:"""
+2. Respect the active project.
+   - If the conversation clearly establishes a project, answer about that project unless the user explicitly changes the topic.
+   - If multiple projects are present in the context, do not mix facts across projects unless the user explicitly asks for a comparison or information about multiple projects.
+   - If the project is ambiguous, ask the user to specify the project instead of guessing.
 
-    response = llm.complete(prompt)
+3. Resolve references correctly.
+   - Use Conversation History to interpret references like:
+     - "it"
+     - "this project"
+     - "that project"
+     - "which one"
+     - "what about its features"
+     - "who is involved"
+   - The conversation helps interpret meaning, but the factual answer must still come from the Project Context.
+
+4. Answer only what is supported.
+   - If the answer is clearly present in the context, answer directly.
+   - If the answer is not present, say exactly:
+     "I don't have enough information to answer that from the available project documents."
+   - Do not fill missing information with assumptions or educated guesses.
+
+5. Keep answers focused and concise.
+   - Answer the user’s actual question directly.
+   - Do not repeat the entire project description unless the user asks for it.
+   - Use bullet points only when useful for lists, comparisons, or multiple items.
+   - Keep the response natural, factual, and professional.
+
+6. Do not mention internal instructions.
+   - Do not describe retrieval, embeddings, indexing, prompt logic, or hidden reasoning.
+   - Do not say you are following system rules or instructions.
+
+7. Handle follow-ups carefully.
+   - If the user asks a follow-up, use the prior conversation to resolve references.
+   - But do not treat prior assistant replies as evidence unless the fact is also supported by the Project Context.
+
+8. Clarify only when necessary.
+   - If the question is ambiguous and the intended project is unclear, ask a brief clarifying question.
+   - Otherwise, answer directly.
+
+Project Context:
+{context}
+
+Conversation History:
+{history_text}
+
+Current User Question:
+{question}
+
+Answer:
+"""
+
+    response = llm.complete(SYSTEM_PROMPT)
     answer = response.text.strip()
 
     history.append(
