@@ -34,6 +34,8 @@ Latest question:
 
 Standalone question:"""
 
+  response = llm.complete(prompt)
+  
   return response.text.strip() or question.strip()
 
 def generate_answer(question: str, history: list[ChatMessage]):
