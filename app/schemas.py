@@ -6,3 +6,11 @@ class ProjectCreate(BaseModel):
   technologies: list[str] | None = None
   team: list[str] | None = None
   features: list[str] | None = None
+
+class ChatMessage(BaseModel):
+  role:str
+  content:str
+
+class ChatRequest(BaseModel):
+  question:str
+  history:list[ChatMessage] = []
