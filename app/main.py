@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.database.models import Project
 from app.database.dependencies import get_db
-from app.schemas import ProjectCreate
+from app.schemas import ProjectCreate, ChatRequest
 from app.services.markdown import to_markdown_list, create_project_markdown
+from app.services.indexing import index_project_markdown
+from app.services.chat import generate_answer
 
 app = FastAPI()
 
@@ -64,6 +66,8 @@ def create_project(
 
   markdown = create_project_markdown(project)
 
+  index_project_markdown(markdown, project_name)
+
   new_project = Project(
     name=project_name,
     overview=project.overview.strip(),
@@ -83,4 +87,26 @@ def create_project(
         "project": project.model_dump(),
         "markdown": markdown
     }
+  }
+
+@app.post("/api/chat")
+def chat(request:ChatRequest):
+  if not request.question.strip():
+    return JSONResponse(
+      status_code=400,
+      content={
+        "success":False,
+        "message":"Question is required"
+      }
+    )
+  
+  result = generate_answer(
+    question=request.question,
+    session_id=request.sessionId
+  )
+
+  return{
+    "success":True,
+    "message":"Answer generated successfully",
+    "data":result
   }
